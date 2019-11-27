@@ -9,6 +9,7 @@ import preprocess
 import sys, getopt
 import csv
 from keras import backend as K
+import matplotlib.pyplot as plt
 
 def recall_m(y_true, y_pred):
         true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
@@ -92,21 +93,33 @@ class MODEL():
             validation_data=(self.X_test, self.y_test)
         )
 
-        val_loss = history.history['val_loss']
-        val_loss = history.history['val_accuracy']
-        val_f1_m = history.history['val_f1_m']
-        val_precision_m = history.history['val_precision_m']
-        val_recall_m = history.history['val_recall_m']
+        self.val_loss = history.history['val_loss']
+        self.val_accuracy = history.history['val_accuracy']
+        self.val_f1_m = history.history['val_f1_m']
+        self.val_precision_m = history.history['val_precision_m']
+        self.val_recall_m = history.history['val_recall_m']
+
+        # save the file for use in future sessions
+        tf.keras.models.save_model(self.model, self.FILE, True)
+
+    def plot_history(self):
+        plt.plot(self.val_loss)
+        plt.plot(self.val_accuracy)
+        plt.plot(self.val_f1_m)
+        plt.plot(self.val_precision_m)
+        plt.plot(self.val_recall_m)
+        plt.legend(['Loss', 'Accuracy', 'F1 Score', 'Precision', 'Recall'])
+        plt.xlabel('Epoch Number')
+        plt.ylabel('End of Epoch Result')
+        plt.title('Validation Results per Epoch')
+        plt.show()
 
         with open('TrainingHistory.csv', 'w', newline='') as csv_file:
             csv_writer = csv.writer(csv_file, delimiter=',')
             csv_writer.writerow(['epoch', 'val_loss', 'val_accuracy', 'val_f1_m', 'val_precision_m', 'val_recall_m'])
-            for i in range(len(val_loss)):
-                csv_writer.writerow([i, val_loss[i], val_loss[i], val_f1_m[i], val_precision_m[i], val_recall_m[i]])
+            for i in range(len(self.val_loss)):
+                csv_writer.writerow([i, self.val_loss[i], self.val_accuracy[i], self.val_f1_m[i], self.val_precision_m[i], self.val_recall_m[i]])
         csv_file.close()
-
-        # save the file for use in future sessions
-        tf.keras.models.save_model(self.model, self.FILE, True)
 
     def test_model(self):
         score = self.model.evaluate(self.X_test, self.y_test, verbose=0)
@@ -128,10 +141,11 @@ class MODEL():
                 sums[i] += np.dot(weights[i], last_weights)
             last_weights = sums
 
-        print("\nRelevance to Autism Classification:")
-        relevance = [x for _,x in sorted(zip(last_weights,self.headers))][::-1]
+        print("\nFeature Importance:")
+        relevance = [[y, x] for y, x in sorted(zip(last_weights,self.headers))][::-1]
         for i in range(len(relevance)):
-            print("{}: {}".format(i, relevance[i]))
+            space = " "*(30 - len(str(relevance[i][1])))
+            print("{}{}{:.4f}".format(relevance[i][1], space, relevance[i][0]))
 
     def __init__(self, batch=50):
         self.FILE = "FORWARD.h5"
@@ -178,10 +192,11 @@ def main(argv):
     # test model
     model.test_model()
     
+    model.analyze_weights()
+    
     if plot_filename is not None:
         model.plot_model(plot_filename)
-    
-    model.analyze_weights()
+        model.plot_history()
         
 if __name__ == '__main__':
 	main(sys.argv[1:])

@@ -3,7 +3,8 @@ import csv
 from sklearn.model_selection import train_test_split
 
 # default values
-FILENAME = "autism-screening-for-toddlers/Toddler Autism dataset July 2018.csv"
+#FILENAME = "autism-screening-for-toddlers/Toddler Autism dataset July 2018.csv"
+FILENAME = "Toddler Autism.csv"
 #ALL_COLUMNS = ["Case_No", "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10", "Age_Mons", "Qchat-10-Score", "Sex", "Ethnicity", "Jaundice", "Family_mem_with_ASD", "Who completed the test", "Class/ASD Traits"] 
 RELEVANT_COLUMNS = ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10", "Age_Mons", "Qchat-10-Score", "Sex", "Ethnicity", "Jaundice", "Family_mem_with_ASD"]
 COLUMN_TYPE = ["BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "NORM", "NORM", "ONEH", "ONEH", "YORN", "YORN"]

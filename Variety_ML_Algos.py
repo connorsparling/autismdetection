@@ -1,8 +1,10 @@
+import collections
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
 from sklearn import metrics
+from sklearn.neural_network import MLPClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler
 from sklearn.neighbors import KNeighborsClassifier
@@ -28,16 +30,13 @@ x[:, 14] = labelEncoder.fit_transform(x[:, 14])
 x[:, 15] = labelEncoder.fit_transform(x[:, 15])
 x[:, 16] = labelEncoder.fit_transform(x[:, 16])
 
-xTrain, xTest, yTrain, yTest = train_test_split(x, y, test_size = 0.20)
+xTrain, xTest, yTrain, yTest = train_test_split(x, y, test_size = 0.25)
 scaler = StandardScaler()
 scaler = StandardScaler()
 scaler.fit(xTrain)
 
-xTrainKMeans = xTrain
-xTestKMeans = xTest
 xTrain = scaler.transform(xTrain)
 xTest = scaler.transform(xTest)
-
 
 #K Nearest Neighbors
 classifier = KNeighborsClassifier(n_neighbors = 13)
@@ -80,7 +79,7 @@ clf = RandomForestClassifier(n_estimators = 100)
 clf.fit(xTrain, yTrain)
 yPredRF = clf.predict(xTest)
 #print("Accuracy: ", metrics.accuracy_score(yTest, yPredRF))
-print("Random Forest------------------------------------------")
+print("\nRandom Forest------------------------------------------")
 print("Confusion Matrix:")
 print(confusion_matrix(yTest, yPredRF))
 print("Classification Report:")
@@ -90,28 +89,3 @@ featureImpRF = pd.Series(clf.feature_importances_,
 print("Feature Importance: ")
 print(featureImpRF)
 
-'''
-#K Means
-print("\nKmeans:")
-km = KMeans(n_clusters = 2, n_jobs = 18, random_state = 21)
-km.fit(xTrainKMeans)
-centers = km.cluster_centers_
-print(centers)
-'''
-
-'''
-error = []
-for i in range(1, 40):
-    knn = KNeighborsClassifier(n_neighbors = i)
-    knn.fit(xTrain, yTrain)
-    predI = knn.predict(xTest)
-    error.append(np.mean(predI != yTest))
-
-plt.figure(figsize = (12,6))
-plt.plot(range(1, 40), error, color = 'red', linestyle = 'dashed', marker = 'o',
-         markerfacecolor = 'blue', markersize = 10)
-plt.title('Error Rate K Value')
-plt.xlabel('K Value')
-plt.ylabel('Mean Error')
-plt.show()
-'''

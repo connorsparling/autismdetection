@@ -35,6 +35,14 @@ class MODEL():
             return True
         return False
 
+    def load_data(self):
+        X_train, X_test, y_train, y_test, headers = preprocess.load_data()
+        self.X_train = np.array(X_train)
+        self.X_test = np.array(X_test)
+        self.y_train = np.array(y_train)
+        self.y_test = np.array(y_test)
+        self.headers = headers
+
     def init_model(self):
         self.model = tf.keras.models.Sequential()
 
@@ -71,28 +79,37 @@ class MODEL():
         self.init_model()
 
         # load data
-        X_train, X_test, y_train, y_test, headers = preprocess.load_data()
-        self.headers = headers
+        self.load_data()
 
         # run and train model
         print("Training Model...")
-        self.model.fit(
-            np.array(X_train), 
-            np.array(y_train),
+        history = self.model.fit(
+            self.X_train, 
+            self.y_train,
             batch_size=self.BATCH_SIZE,
             epochs=epochs, 
             verbose=1,
-            validation_data=(np.array(X_test), np.array(y_test))
+            validation_data=(self.X_test, self.y_test)
         )
 
-        # test model
-        self.test_model(np.array(X_test), np.array(y_test))
+        val_loss = history.history['val_loss']
+        val_loss = history.history['val_accuracy']
+        val_f1_m = history.history['val_f1_m']
+        val_precision_m = history.history['val_precision_m']
+        val_recall_m = history.history['val_recall_m']
+
+        with open('TrainingHistory.csv', 'w', newline='') as csv_file:
+            csv_writer = csv.writer(csv_file, delimiter=',')
+            csv_writer.writerow(['epoch', 'val_loss', 'val_accuracy', 'val_f1_m', 'val_precision_m', 'val_recall_m'])
+            for i in range(len(val_loss)):
+                csv_writer.writerow([i, val_loss[i], val_loss[i], val_f1_m[i], val_precision_m[i], val_recall_m[i]])
+        csv_file.close()
 
         # save the file for use in future sessions
         tf.keras.models.save_model(self.model, self.FILE, True)
 
-    def test_model(self, X_test, y_test):
-        score = self.model.evaluate(X_test, y_test, verbose=0)
+    def test_model(self):
+        score = self.model.evaluate(self.X_test, self.y_test, verbose=0)
         print("Loss: " + str(score[0]))
         print("Accuracy: " + str(score[1]))
         print("F1 Score: " + str(score[2]))
@@ -147,6 +164,7 @@ def main(argv):
     if epochs is not None:
         model.train_model(epochs)
     else: 
+        model.load_data()
         if filename is not None:
             if filename != "default":
                 if not filename.endswith(".h5"):
@@ -156,6 +174,9 @@ def main(argv):
             if not model.load_model():
                 print("Model failed to load")
                 sys.exit()
+
+    # test model
+    model.test_model()
     
     if plot_filename is not None:
         model.plot_model(plot_filename)

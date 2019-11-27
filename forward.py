@@ -8,6 +8,24 @@ import imutils
 import preprocess
 import sys, getopt
 import csv
+from keras import backend as K
+
+def recall_m(y_true, y_pred):
+        true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+        possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
+        recall = true_positives / (possible_positives + K.epsilon())
+        return recall
+
+def precision_m(y_true, y_pred):
+        true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+        predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
+        precision = true_positives / (predicted_positives + K.epsilon())
+        return precision
+
+def f1_m(y_true, y_pred):
+    precision = precision_m(y_true, y_pred)
+    recall = recall_m(y_true, y_pred)
+    return 2*((precision*recall)/(precision+recall+K.epsilon()))
 
 class MODEL():
     def load_model(self):
@@ -20,33 +38,41 @@ class MODEL():
     def init_model(self):
         self.model = tf.keras.models.Sequential()
 
+        input_dim = 27
+
         # Model 1: 99.05% accuracy after 36 epochs
-        # self.model.add(tf.keras.layers.Dense(36, input_dim=27, activation="relu"))
+        # self.model.add(tf.keras.layers.Dense(36, input_dim=input_dim, activation="relu"))
         # self.model.add(tf.keras.layers.Dense(12, activation="relu"))
         # self.model.add(tf.keras.layers.Dense(1, activation="sigmoid"))
 
         # Model 2: 99.05% accuracy with 20 epochs and 99.53% accuracy with 33 epochs
-        # self.model.add(tf.keras.layers.Dense(50, input_dim=27, activation="relu"))
+        # self.model.add(tf.keras.layers.Dense(50, input_dim=input_dim, activation="relu"))
         # self.model.add(tf.keras.layers.Dense(20, activation="relu"))
         # self.model.add(tf.keras.layers.Dense(1, activation="sigmoid"))
 
         # Model 3: 
-        # self.model.add(tf.keras.layers.Dense(1000, input_dim=27, activation="relu"))
+        # self.model.add(tf.keras.layers.Dense(1000, input_dim=input_dim, activation="relu"))
         # self.model.add(tf.keras.layers.Dense(100, activation="relu"))
         # self.model.add(tf.keras.layers.Dense(1, activation="sigmoid"))
 
         # Model 4: 
-        self.model.add(tf.keras.layers.Dense(15, input_dim=27, activation="relu"))
+        # self.model.add(tf.keras.layers.Dense(15, input_dim=input_dim, activation="relu"))
+        # self.model.add(tf.keras.layers.Dense(1, activation="sigmoid"))
+
+        # Model 5: 
+        self.model.add(tf.keras.layers.Dense(30, input_dim=input_dim, activation="relu"))
+        self.model.add(tf.keras.layers.Dense(10, input_dim=input_dim, activation="relu"))
         self.model.add(tf.keras.layers.Dense(1, activation="sigmoid"))
 
-        self.model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+        self.model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy', f1_m, precision_m, recall_m])
 
-    def train_model(self):
+    def train_model(self, epochs):
         print("Initializing Model...")
         self.init_model()
 
         # load data
-        X_train, X_test, y_train, y_test = preprocess.load_data()
+        X_train, X_test, y_train, y_test, headers = preprocess.load_data()
+        self.headers = headers
 
         # run and train model
         print("Training Model...")
@@ -54,40 +80,41 @@ class MODEL():
             np.array(X_train), 
             np.array(y_train),
             batch_size=self.BATCH_SIZE,
-            epochs=100, 
+            epochs=epochs, 
             verbose=1,
             validation_data=(np.array(X_test), np.array(y_test))
         )
 
         # test model
-        score = self.model.evaluate(np.array(X_test), np.array(y_test), verbose=0)
-        print('Test loss:', score[0])
-        print('Test accuracy:', score[1])
+        self.test_model(np.array(X_test), np.array(y_test))
 
         # save the file for use in future sessions
         tf.keras.models.save_model(self.model, self.FILE, True)
 
-        count = 0
-        with open('layer_weights.csv', 'w', newline='') as csv_file:
-            csv_writer = csv.writer(csv_file, delimiter=',')
-            for layer in self.model.layers:
-                count += 1
-                print("Layer {} Shape: {}".format(count, [len(w) for w in layer.get_weights()]))
-                for l in layer.get_weights():
-                    csv_writer.writerow(l)#layer.get_weights())
-        csv_file.close()
+    def test_model(self, X_test, y_test):
+        score = self.model.evaluate(X_test, y_test, verbose=0)
+        print("Loss: " + str(score[0]))
+        print("Accuracy: " + str(score[1]))
+        print("F1 Score: " + str(score[2]))
+        print("Precision: " + str(score[3]))
+        print("Recall: " + str(score[4]))
+    
+    def plot_model(self, filename):
+        tf.keras.utils.plot_model(self.model, show_shapes=True, to_file=filename)
 
+    def analyze_weights(self):
+        last_weights = [1.0]
+        for layer in self.model.layers[::-1]:
+            weights, bias = layer.get_weights()
+            sums = np.zeros(weights.shape[0])
+            for i in range(weights.shape[0]):
+                sums[i] += np.dot(weights[i], last_weights)
+            last_weights = sums
 
-    def detect(self, image):
-        # Save colour image to show to user
-        image = self.prep_image(image)
-        image = image.reshape(1, self.IMG_WIDTH, self.IMG_HEIGHT, 1)
-        # Cast to float to handle error
-        image = tf.cast(image, tf.float32)
-        prediction = self.model.predict(image)
-        # Convert prediction from one hot to category
-        index = tf.argmax(prediction[0], axis=0)
-        return self.CATEGORIES[index]
+        print("\nRelevance to Autism Classification:")
+        relevance = [x for _,x in sorted(zip(last_weights,self.headers))][::-1]
+        for i in range(len(relevance)):
+            print("{}: {}".format(i, relevance[i]))
 
     def __init__(self, batch=50):
         self.FILE = "FORWARD.h5"
@@ -95,11 +122,12 @@ class MODEL():
 
 def main(argv):
     filename = None
-    train = False
+    plot_filename = None
+    epochs = None
     try:
-        opts, args = getopt.getopt(argv,"htdf:",["file=", "default", "train"])
+        opts, args = getopt.getopt(argv,"ht:df:p:",["file=", "plot=", "default", "train="])
     except getopt.GetoptError:
-        print("INCORRECT FORMAT: \"model.py [-f <output_file> | -d] [-t]\"")
+        print("INCORRECT FORMAT: \"model.py [-f <output_file> | -d] [-t <epochs>] [-p <plot_image_file>]\"")
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
@@ -109,13 +137,15 @@ def main(argv):
             filename = arg
         elif opt in ("-d", "--default"):
             filename = "default"
+        elif opt in ("-p", "--plot"):
+            plot_filename = arg
         elif opt in ("-t", "--train"):
-            train = True
+            epochs = int(arg)
 
     model = MODEL()
 
-    if train:
-        model.train_model()
+    if epochs is not None:
+        model.train_model(epochs)
     else: 
         if filename is not None:
             if filename != "default":
@@ -126,6 +156,11 @@ def main(argv):
             if not model.load_model():
                 print("Model failed to load")
                 sys.exit()
+    
+    if plot_filename is not None:
+        model.plot_model(plot_filename)
+    
+    model.analyze_weights()
         
 if __name__ == '__main__':
 	main(sys.argv[1:])

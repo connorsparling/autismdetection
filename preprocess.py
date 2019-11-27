@@ -4,17 +4,20 @@ from sklearn.model_selection import train_test_split
 
 # default values
 FILENAME = "autism-screening-for-toddlers/Toddler Autism dataset July 2018.csv"
-ALL_COLUMNS = ["Case_No", "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10", "Age_Mons", "Qchat-10-Score", "Sex", "Ethnicity", "Jaundice", "Family_mem_with_ASD", "Who completed the test", "Class/ASD Traits"] 
+#ALL_COLUMNS = ["Case_No", "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10", "Age_Mons", "Qchat-10-Score", "Sex", "Ethnicity", "Jaundice", "Family_mem_with_ASD", "Who completed the test", "Class/ASD Traits"] 
 RELEVANT_COLUMNS = ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10", "Age_Mons", "Qchat-10-Score", "Sex", "Ethnicity", "Jaundice", "Family_mem_with_ASD"]
 COLUMN_TYPE = ["BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "NORM", "NORM", "ONEH", "ONEH", "YORN", "YORN"]
+# RELEVANT_COLUMNS = ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10"]
+# COLUMN_TYPE = ["BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL"]
 CLASSIFIER_COLUMN = "Class/ASD Traits"
 
-def get_one_hot(data):
+def get_one_hot(data, header):
     types = []
     zeros = []
     columns = []
     count = 0
-    for x in data:
+    for d in data:
+        x = "{}Is{}".format(header, d.title().replace(" ",""))
         count += 1
         if x not in types:
             types.append(x)
@@ -87,7 +90,7 @@ def load_data():
             X_New_T.append(get_yes_no(X_T[i]))
             H.append(headers[i])
         elif COLUMN_TYPE[i] is "ONEH":
-            oneH, head = get_one_hot(X_T[i])
+            oneH, head = get_one_hot(X_T[i], headers[i])
             for j in range(len(head)):
                 col = oneH[j]
                 X_New_T.append(col)
@@ -102,7 +105,7 @@ def load_data():
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle=False) 
     print("\nTRAIN: {}\tTEST: {}".format(X_train.shape, X_test.shape))
 
-    return X_train, X_test, y_train, y_test
+    return X_train, X_test, y_train, y_test, H
 
 def main():
     X_train, X_test, y_train, y_test = load_data()

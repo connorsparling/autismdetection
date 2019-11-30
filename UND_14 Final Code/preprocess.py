@@ -5,11 +5,60 @@ from sklearn.model_selection import train_test_split
 # default values
 #FILENAME = "autism-screening-for-toddlers/Toddler Autism dataset July 2018.csv"
 FILENAME = "Toddler Autism.csv"
-#ALL_COLUMNS = ["Case_No", "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10", "Age_Mons", "Qchat-10-Score", "Sex", "Ethnicity", "Jaundice", "Family_mem_with_ASD", "Who completed the test", "Class/ASD Traits"] 
-RELEVANT_COLUMNS = ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10", "Age_Mons", "Qchat-10-Score", "Sex", "Ethnicity", "Jaundice", "Family_mem_with_ASD"]
-COLUMN_TYPE = ["BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "NORM", "NORM", "ONEH", "ONEH", "YORN", "YORN"]
-# RELEVANT_COLUMNS = ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10"]
-# COLUMN_TYPE = ["BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL"]
+# COLUMN_DICT_NORM = {
+#     "Case_No": None, 
+#     "A1": "BOOL", 
+#     "A2": "BOOL", 
+#     "A3": "BOOL", 
+#     "A4": "BOOL", 
+#     "A5": "BOOL", 
+#     "A6": "BOOL", 
+#     "A7": "BOOL", 
+#     "A8": "BOOL", 
+#     "A9": "BOOL", 
+#     "A10": "BOOL", 
+#     "Age_Mons": "NORM", 
+#     "Qchat-10-Score": "NORM", 
+#     "Sex": "ONEH", 
+#     "Ethnicity": "ONEH", 
+#     "Jaundice": "YORN", 
+#     "Family_mem_with_ASD": "YORN", 
+#     "Who completed the test": "ONEH", 
+#     "Class/ASD Traits": "BOOL"
+# }
+# COLUMN_DICT = {
+#     "Case_No": None, 
+#     "A1": "ONEH", 
+#     "A2": "ONEH", 
+#     "A3": "ONEH", 
+#     "A4": "ONEH", 
+#     "A5": "ONEH", 
+#     "A6": "ONEH", 
+#     "A7": "ONEH", 
+#     "A8": "ONEH", 
+#     "A9": "ONEH", 
+#     "A10": "ONEH", 
+#     "Age_Mons": "NORM", 
+#     "Qchat-10-Score": "NORM", 
+#     "Sex": "ONEH", 
+#     "Ethnicity": "ONEH",
+#     "Jaundice": "YORN", 
+#     "Family_mem_with_ASD": "YORN", 
+#     "Who completed the test": "ONEH", 
+#     "Class/ASD Traits": "BOOL"
+# }
+RELEVANT_COLUMNS = [
+    ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10", "Age_Mons", "Qchat-10-Score", "Sex", "Ethnicity", "Jaundice", "Family_mem_with_ASD"],
+    ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10", "Age_Mons", "Sex", "Ethnicity", "Jaundice", "Family_mem_with_ASD"],
+    ["Age_Mons", "Qchat-10-Score", "Sex", "Ethnicity", "Jaundice", "Family_mem_with_ASD"],
+    ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10", "Sex", "Jaundice"]
+]
+COLUMN_TYPE = [
+    ["BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "NORM", "NORM", "ONEH", "ONEH", "YORN", "YORN"],
+    ["BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "NORM", "ONEH", "ONEH", "YORN", "YORN"],
+    ["NORM", "NORM", "ONEH", "ONEH", "YORN", "YORN"],
+    ["ONEH", "ONEH", "ONEH", "ONEH", "ONEH", "ONEH", "ONEH", "ONEH", "ONEH", "ONEH", "ONEH", "YORN"]
+]
 CLASSIFIER_COLUMN = "Class/ASD Traits"
 
 def get_one_hot(data, header):
@@ -33,8 +82,8 @@ def get_one_hot(data, header):
 
 def get_yes_no(data):
     new = []
-    for x in data:
-        if x.lower() == "yes":
+    for d in data:
+        if d.lower() == 'yes':
             new.append(float(1.0))
         else:
             new.append(float(0.0))
@@ -61,7 +110,7 @@ def get_bool(data):
             new.append(float(0.0))
     return np.array(new)
 
-def load_data():
+def load_data(subset):
     X = []
     y = []
     headers = []
@@ -69,9 +118,10 @@ def load_data():
         csv_reader = csv.reader(csv_file, delimiter=',')
         headers_file = next(csv_reader)
         y_index = headers_file.index(CLASSIFIER_COLUMN)
-        headers = [h for h in headers_file if h in RELEVANT_COLUMNS]
+        #COLUMN_TYPE = [COLUMN_DICT[col] for col in RELEVANT_COLUMNS[subset]]
+        headers = [h for h in headers_file if h in RELEVANT_COLUMNS[subset]]
         for row in csv_reader:
-            dp = [row[i] for i in range(len(headers_file)) if headers_file[i] in RELEVANT_COLUMNS]
+            dp = [row[i] for i in range(len(headers_file)) if headers_file[i] in RELEVANT_COLUMNS[subset]]
             X.append(dp)
             y.append(row[y_index])
     csv_file.close()
@@ -81,16 +131,16 @@ def load_data():
     H = []
     for i in range(len(headers)):
         col = None
-        if COLUMN_TYPE[i] is "BOOL":
+        if COLUMN_TYPE[subset][i] is "BOOL":
             X_New_T.append(get_bool(X_T[i]))
             H.append(headers[i])
-        elif COLUMN_TYPE[i] is "NORM":
+        elif COLUMN_TYPE[subset][i] is "NORM":
             X_New_T.append(get_normalized(X_T[i]))
             H.append(headers[i])
-        elif COLUMN_TYPE[i] is "YORN":
+        elif COLUMN_TYPE[subset][i] is "YORN":
             X_New_T.append(get_yes_no(X_T[i]))
             H.append(headers[i])
-        elif COLUMN_TYPE[i] is "ONEH":
+        elif COLUMN_TYPE[subset][i] is "ONEH":
             oneH, head = get_one_hot(X_T[i], headers[i])
             for j in range(len(head)):
                 col = oneH[j]
@@ -109,14 +159,7 @@ def load_data():
     return X_train, X_test, y_train, y_test, H
 
 def main():
-    X_train, X_test, y_train, y_test = load_data()
-
-    # with open('X_train.csv', 'w', newline='') as csv_file:
-    #     csv_writer = csv.writer(csv_file, delimiter=',')
-    #     csv_writer.writerow(RELEVANT_COLUMNS)
-    #     for row in X_test:
-    #         csv_writer.writerow(row)
-    # csv_file.close()
+    X_train, X_test, y_train, y_test, headers = load_data(0)
 
 if __name__ == '__main__':
 	main()

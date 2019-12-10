@@ -53,7 +53,7 @@ RELEVANT_COLUMNS = [
     ["Age_Mons", "Qchat-10-Score", "Sex", "Ethnicity", "Jaundice", "Family_mem_with_ASD"],
     ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10", "Sex", "Jaundice"],
     ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10"],
-    ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10"]
+    ["Age_Mons", "Sex", "Ethnicity", "Jaundice", "Family_mem_with_ASD"]
 ]
 COLUMN_TYPE = [
     ["BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "NORM", "NORM", "ONEH", "ONEH", "YORN", "YORN"],
@@ -61,7 +61,7 @@ COLUMN_TYPE = [
     ["NORM", "NORM", "ONEH", "ONEH", "YORN", "YORN"],
     ["ONEH", "ONEH", "ONEH", "ONEH", "ONEH", "ONEH", "ONEH", "ONEH", "ONEH", "ONEH", "ONEH", "YORN"],
     ["BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL"],
-    ["ONEH", "ONEH", "ONEH", "ONEH", "ONEH", "ONEH", "ONEH", "ONEH", "ONEH", "ONEH"]
+    ["NORM", "ONEH", "ONEH", "YORN", "YORN"],
 ]
 CLASSIFIER_COLUMN = "Class/ASD Traits"
 

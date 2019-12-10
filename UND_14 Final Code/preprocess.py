@@ -51,13 +51,17 @@ RELEVANT_COLUMNS = [
     ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10", "Age_Mons", "Qchat-10-Score", "Sex", "Ethnicity", "Jaundice", "Family_mem_with_ASD"],
     ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10", "Age_Mons", "Sex", "Ethnicity", "Jaundice", "Family_mem_with_ASD"],
     ["Age_Mons", "Qchat-10-Score", "Sex", "Ethnicity", "Jaundice", "Family_mem_with_ASD"],
-    ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10", "Sex", "Jaundice"]
+    ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10", "Sex", "Jaundice"],
+    ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10"],
+    ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10"]
 ]
 COLUMN_TYPE = [
     ["BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "NORM", "NORM", "ONEH", "ONEH", "YORN", "YORN"],
     ["BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "NORM", "ONEH", "ONEH", "YORN", "YORN"],
     ["NORM", "NORM", "ONEH", "ONEH", "YORN", "YORN"],
-    ["ONEH", "ONEH", "ONEH", "ONEH", "ONEH", "ONEH", "ONEH", "ONEH", "ONEH", "ONEH", "ONEH", "YORN"]
+    ["ONEH", "ONEH", "ONEH", "ONEH", "ONEH", "ONEH", "ONEH", "ONEH", "ONEH", "ONEH", "ONEH", "YORN"],
+    ["BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL"],
+    ["ONEH", "ONEH", "ONEH", "ONEH", "ONEH", "ONEH", "ONEH", "ONEH", "ONEH", "ONEH"]
 ]
 CLASSIFIER_COLUMN = "Class/ASD Traits"
 
@@ -104,7 +108,7 @@ def get_normalized(data):
 def get_bool(data):
     new = []
     for x in data:
-        if x == 1:
+        if int(x) == 1:
             new.append(float(1.0))
         else:
             new.append(float(0.0))

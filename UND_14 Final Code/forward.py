@@ -145,7 +145,13 @@ class MODEL():
         self.model.add(tf.keras.layers.Dense(1, activation="sigmoid"))
 
         # Compile the model with custom metrics
-        self.model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy', f1_m, precision_m, recall_m])
+        # self.model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy', f1_m, precision_m, recall_m])
+
+        sgd = tf.keras.optimizers.SGD(lr=0.1, momentum=0.9, nesterov=False) #decay=1e-6, 
+        self.model.compile(
+            loss='mean_squared_error', 
+            optimizer=sgd, 
+            metrics=['accuracy', f1_m, precision_m, recall_m])
 
     def train_model(self, epochs):
         print("Initializing Model...")
@@ -190,16 +196,22 @@ class MODEL():
         plt.title('Validation Results per Epoch')
         plt.show()
 
+        QS = ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10"]
+
         plt.figure(2, figsize=[10,5])
         hist_weight_T = np.transpose(self.historical_weights)
         count = 0
         for row in hist_weight_T:
             col = ''
-            if self.subset == 3 and self.headers[count][0] == 'A':
+            if (self.subset == 3 or self.subset == 5) and self.headers[count][0] == 'A':
                 if self.headers[count][-1] == '1':
                     col = '--'
                 elif self.headers[count][-1] == '0':
                     col = ':'
+            elif QS.count(self.headers[count]) > 0:
+                col = ':'
+            elif self.headers[count].startswith("Ethnicity"):
+                col = '--'
             plt.plot(row, col)
             count += 1
 
